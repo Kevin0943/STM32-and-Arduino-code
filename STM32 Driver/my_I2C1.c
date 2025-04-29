@@ -103,10 +103,10 @@ volatile uint8_t i2c1_tx_buf[I2C1_BUF_SIZE]; // 資料傳送Buffer
 // ===== I2C1 Function =====
 // --- I2C1 Master 初始化 ---
 void I2C1_Master_Init(void) {
-	// 啟用APB2相關Clock
-	RCC_APB2ENR |= (1 << 3); // 啟用GPIOB Clock
+    // 啟用APB2相關Clock
+    RCC_APB2ENR |= (1 << 3); // 啟用GPIOB Clock
 
-	// 啟用APB1相關Clock
+    // 啟用APB1相關Clock
     RCC_APB1ENR |= (1 << 21); // 啟用I2C1 Clock
 
     // 啟用AHB相關Clock
@@ -132,7 +132,7 @@ void I2C1_Master_Init(void) {
     I2C1_CCR = 40;         // 設SCL Clock頻率為100kHz
     I2C1_TRISE = 9;        // 設SCL Clock為HIGH的最長時間(單位為APB1 Clock)
     I2C1_CR2 |= (1 << 9) | // ITEVTEN = 1，啟用Event中斷
-    		    (1 << 8);  // ITERREN = 1，啟用Error中斷
+                (1 << 8);  // ITERREN = 1，啟用Error中斷
 
     // I2C1的DMA相關設定
     I2C1_CR2 |= (1 << 11); // 啟用I2C1的DMA傳輸和接收功能
@@ -166,19 +166,19 @@ void I2C1_Master_Init(void) {
 
 // --- I2C1 寫入i2c1_tx_buf ---
 void I2C1_TX_Buf_Write(int idx, uint8_t val) {
-	while (I2C1_SR2 & (1 << 1)); // 等待BUSY = 0 (等待先前的通訊結束)
-	i2c1_tx_buf[idx] = val;
+    while (I2C1_SR2 & (1 << 1)); // 等待BUSY = 0 (等待先前的通訊結束)
+    i2c1_tx_buf[idx] = val;
 }
 
 // --- I2C1 讀取i2c1_rx_buf ---
 uint8_t I2C1_RX_Buf_Read(int idx) {
-	while (I2C1_SR2 & (1 << 1)); // 等待BUSY = 0 (等待先前的通訊結束)
-	return i2c1_rx_buf[idx];
+    while (I2C1_SR2 & (1 << 1)); // 等待BUSY = 0 (等待先前的通訊結束)
+    return i2c1_rx_buf[idx];
 }
 
 // --- I2C1 產生start bit ---
 void I2C1_Master_Start(void) {
-	// 產生start bit
+    // 產生start bit
     I2C1_CR1 |= (1 << 8); // START
 
     // 等待SB = 1時觸發Event中斷以接續下一步
@@ -186,23 +186,23 @@ void I2C1_Master_Start(void) {
 
 // --- I2C1 傳送slave address + R/W bit ---
 void I2C1_Master_Send_SlaveAddress(void) {
-	if(reStarted == 0) {
-	    // 傳送slave address，同時清除SB：先讀取SR1，再寫入DR
-		(void)I2C1_SR1; // 先讀取SR1
-	    I2C1_DR = slaveAddress << 1; // 再寫入DR，I2C1_DR = 7bit slave address + R/W bit
-	}
-	else {
-	    // 傳送slave address，同時清除SB：先讀取SR1，再寫入DR
-		(void)I2C1_SR1; // 先讀取SR1
-	    I2C1_DR = (slaveAddress << 1) | 1; // 再寫入DR，I2C1_DR = 7bit slave address + R/W bit
-	}
+    if(reStarted == 0) {
+        // 傳送slave address，同時清除SB：先讀取SR1，再寫入DR
+        (void)I2C1_SR1; // 先讀取SR1
+        I2C1_DR = slaveAddress << 1; // 再寫入DR，I2C1_DR = 7bit slave address + R/W bit
+    }
+    else {
+        // 傳送slave address，同時清除SB：先讀取SR1，再寫入DR
+        (void)I2C1_SR1; // 先讀取SR1
+        I2C1_DR = (slaveAddress << 1) | 1; // 再寫入DR，I2C1_DR = 7bit slave address + R/W bit
+    }
 
     // 等待ADDR = 1時觸發Event中斷以接續下一步
 }
 
 // --- I2C1 傳送多個byte --- // 用於位在slave address之後的多個byte，包含register address和data
 void I2C1_Master_Send_Data() {
-	DMA1_CCR6 &= ~1; // 設定前先禁用DMA1_Channel6
+    DMA1_CCR6 &= ~1; // 設定前先禁用DMA1_Channel6
     DMA1_CMAR6 = (uint32_t)i2c1_tx_buf; // 設定記憶體位址
     DMA1_CNDTR6 = i2c1_tx_dataLen; // 設定搬運資料長度
     DMA1_CCR6 |= 1; // 啟用DMA1_Channel6，啟用後開始自動搬運直到搬完
@@ -216,17 +216,17 @@ void I2C1_Master_Send_Data() {
 
 // --- I2C1 接收多個byte ---
 void I2C1_Master_Receive_Data() {
-	DMA1_CCR7 &= ~1; // 設定前先禁用DMA1_Channel7
+    DMA1_CCR7 &= ~1; // 設定前先禁用DMA1_Channel7
     DMA1_CMAR7 = (uint32_t)i2c1_rx_buf; // 設定記憶體位址
     DMA1_CNDTR7 = i2c1_rx_dataLen; // 設定搬運資料長度
     DMA1_CCR7 |= 1; // 啟用DMA1_Channel7，啟用後開始自動搬運直到搬完
 
-	if(i2c1_rx_dataLen <= 1) {
-	    I2C1_CR1 &= ~(1 << 10); // 下次接收完資料回傳NACK，若沒這行將會回傳ACK代表叫Slave繼續傳資料
-	}
-	else {
-		I2C1_CR1 |= (1 << 10); // 下次接收完資料回傳ACK，DMA搬運到最後一個數據時自動改為回傳NACK
-	}
+    if(i2c1_rx_dataLen <= 1) {
+        I2C1_CR1 &= ~(1 << 10); // 下次接收完資料回傳NACK，若沒這行將會回傳ACK代表叫Slave繼續傳資料
+    }
+    else {
+        I2C1_CR1 |= (1 << 10); // 下次接收完資料回傳ACK，DMA搬運到最後一個數據時自動改為回傳NACK
+    }
 
     // 清除ADDR：先讀取SR1，再讀取SR2
     (void)I2C1_SR1;
@@ -237,102 +237,102 @@ void I2C1_Master_Receive_Data() {
 
 // --- I2C1 產生stop bit ---
 void I2C1_Master_Stop(void) {
-	// 產生stop bit
+    // 產生stop bit
     I2C1_CR1 |= (1 << 9); // STOP
 }
 
 // --- I2C1 Write ---
 void I2C1_Master_Write(uint8_t slave_Address, const volatile uint8_t *tx_buf, int txLen) {
-	if(txLen > I2C1_BUF_SIZE){ return;} // 傳送長度違法
+    if(txLen > I2C1_BUF_SIZE){ return;} // 傳送長度違法
 
-	i2c1_error = 0; // 刷新Error flag
+    i2c1_error = 0; // 刷新Error flag
 
-	while (I2C1_SR2 & (1 << 1)); // 等待BUSY = 0 (等待先前的通訊結束)
-	rw_state = 0; // 紀錄當前模式為寫入
-	reStarted = 0; // 刷新reStarted
-	slaveAddress = slave_Address; // 紀錄當前通訊的Slave的設備位址
-	i2c1_tx_dataLen = txLen; // 紀錄欲傳送數據的長度，包含register address和data
+    while (I2C1_SR2 & (1 << 1)); // 等待BUSY = 0 (等待先前的通訊結束)
+    rw_state = 0; // 紀錄當前模式為寫入
+    reStarted = 0; // 刷新reStarted
+    slaveAddress = slave_Address; // 紀錄當前通訊的Slave的設備位址
+    i2c1_tx_dataLen = txLen; // 紀錄欲傳送數據的長度，包含register address和data
 
-	if (tx_buf != i2c1_tx_buf){ // 若傳入的tx_buf不是i2c1_tx_buf，則把tx_buf的內容複製到i2c1_tx_buf
-		for(int i = 0; i < i2c1_tx_dataLen; i++){
-			i2c1_tx_buf[i] = tx_buf[i];
-		}
-	}
+    if (tx_buf != i2c1_tx_buf){ // 若傳入的tx_buf不是i2c1_tx_buf，則把tx_buf的內容複製到i2c1_tx_buf
+        for(int i = 0; i < i2c1_tx_dataLen; i++){
+            i2c1_tx_buf[i] = tx_buf[i];
+        }
+    }
 
-	// 產生start bit
-	I2C1_Master_Start();
+    // 產生start bit
+    I2C1_Master_Start();
 
-	// 後續步驟皆由中斷觸發
+    // 後續步驟皆由中斷觸發
 }
 
 // --- I2C1 Read ---
 void I2C1_Master_Read(uint8_t slave_Address, const volatile uint8_t *tx_buf, const volatile uint8_t *rx_buf, int txLen, int rxLen) {
-	if(txLen > I2C1_BUF_SIZE){ return;} // 傳送長度違法
-	if(rxLen > I2C1_BUF_SIZE){ return;} // 接收長度違法
+    if(txLen > I2C1_BUF_SIZE){ return;} // 傳送長度違法
+    if(rxLen > I2C1_BUF_SIZE){ return;} // 接收長度違法
 
-	i2c1_error = 0; // 刷新Error flag
+    i2c1_error = 0; // 刷新Error flag
 
-	while (I2C1_SR2 & (1 << 1)); // 等待BUSY = 0 (等待先前的通訊結束)
-	rw_state = 1; // 紀錄當前模式為讀取
-	reStarted = 0; // 刷新reStarted
-	slaveAddress = slave_Address; // 紀錄當前通訊的Slave的設備位址
-	i2c1_tx_dataLen = txLen; // 紀錄欲傳送數據的長度，只包含register address
-	i2c1_rx_dataLen = rxLen; // 紀錄欲接收數據的長度
+    while (I2C1_SR2 & (1 << 1)); // 等待BUSY = 0 (等待先前的通訊結束)
+    rw_state = 1; // 紀錄當前模式為讀取
+    reStarted = 0; // 刷新reStarted
+    slaveAddress = slave_Address; // 紀錄當前通訊的Slave的設備位址
+    i2c1_tx_dataLen = txLen; // 紀錄欲傳送數據的長度，只包含register address
+    i2c1_rx_dataLen = rxLen; // 紀錄欲接收數據的長度
 
-	if (tx_buf != i2c1_tx_buf){ // 若傳入的tx_buf不是i2c1_tx_buf，則把tx_buf的內容複製到i2c1_tx_buf
-		for(int i = 0; i < i2c1_tx_dataLen; i++){
-			i2c1_tx_buf[i] = tx_buf[i];
-		}
-	}
+    if (tx_buf != i2c1_tx_buf){ // 若傳入的tx_buf不是i2c1_tx_buf，則把tx_buf的內容複製到i2c1_tx_buf
+        for(int i = 0; i < i2c1_tx_dataLen; i++){
+            i2c1_tx_buf[i] = tx_buf[i];
+        }
+    }
 
-	// 產生start bit
-	I2C1_Master_Start();
+    // 產生start bit
+    I2C1_Master_Start();
 
-	// 後續步驟皆由中斷觸發
+    // 後續步驟皆由中斷觸發
 }
 
 // --- I2C1 Event中斷處理函式 ---
 void I2C1_EV_IRQHandler(void) {
-	if (I2C1_SR1 & (1 << 0)) { // SB = 1，表示start bit成功產生
-		I2C1_Master_Send_SlaveAddress();
-	}
-	else if (I2C1_SR1 & (1 << 1)) { // ADDR = 1，表示slave address成功傳送且收到ACK回應
-		if(reStarted == 0) { // 未產生過restart bit
-			I2C1_Master_Send_Data();
-		}
-		else { // 已產生過restart bit
-			I2C1_Master_Receive_Data();
-		}
-	}
-	else if (I2C1_SR1 & (1 << 2)) { // BTF = 1，表示數據傳送完畢
-		// 清除BTF：先讀取SR1，再讀取DR
-		(void)I2C1_SR1;
-		(void)I2C1_DR;
-		if(rw_state == 0) { // 寫入模式
-			I2C1_Master_Stop();
-		}
-		else { // 讀取模式
-			if(reStarted == 0) { // 未產生過restart bit
-				reStarted = 1;
-				I2C1_Master_Start();
-			}
-		}
-	}
+    if (I2C1_SR1 & (1 << 0)) { // SB = 1，表示start bit成功產生
+        I2C1_Master_Send_SlaveAddress();
+    }
+    else if (I2C1_SR1 & (1 << 1)) { // ADDR = 1，表示slave address成功傳送且收到ACK回應
+        if(reStarted == 0) { // 未產生過restart bit
+            I2C1_Master_Send_Data();
+        }
+        else { // 已產生過restart bit
+            I2C1_Master_Receive_Data();
+        }
+    }
+    else if (I2C1_SR1 & (1 << 2)) { // BTF = 1，表示數據傳送完畢
+        // 清除BTF：先讀取SR1，再讀取DR
+        (void)I2C1_SR1;
+        (void)I2C1_DR;
+        if(rw_state == 0) { // 寫入模式
+            I2C1_Master_Stop();
+        }
+        else { // 讀取模式
+            if(reStarted == 0) { // 未產生過restart bit
+                reStarted = 1;
+                I2C1_Master_Start();
+            }
+        }
+    }
 }
 
 // --- DMA1_Channel7 中斷處理函式(I2C1 RX) ---
 void DMA1_Channel7_IRQHandler(void) {
-	if (DMA1_ISR & (1 << 25)) { // DMA1_Channel7搬運完成flag
-	    DMA1_IFCR |= (1 << 25); // 清除DMA1_Channel7搬運完成flag，避免此中斷一直連續觸發
-	    DMA1_CCR7 &= ~1; // 禁用DMA1_Channel7
-	    I2C1_Master_Stop();
-	}
+    if (DMA1_ISR & (1 << 25)) { // DMA1_Channel7搬運完成flag
+        DMA1_IFCR |= (1 << 25); // 清除DMA1_Channel7搬運完成flag，避免此中斷一直連續觸發
+        DMA1_CCR7 &= ~1; // 禁用DMA1_Channel7
+        I2C1_Master_Stop();
+    }
 }
 
 // --- I2C1 Error中斷處理函式 ---
 void I2C1_ER_IRQHandler(void) {
-	i2c1_error = 1; // 紀錄發生錯誤
+    i2c1_error = 1; // 紀錄發生錯誤
 
-	I2C1_SR1 &= ~( (1 << 8) | (1 << 9) | (1 << 10) | (1 << 11) | (1 << 12) | (1 << 14) | (1 << 15) ); // 清除flag，避免此中斷一直連續觸發
-	I2C1_Master_Stop(); // 產生stop bit提早結束通訊
+    I2C1_SR1 &= ~( (1 << 8) | (1 << 9) | (1 << 10) | (1 << 11) | (1 << 12) | (1 << 14) | (1 << 15) ); // 清除flag，避免此中斷一直連續觸發
+    I2C1_Master_Stop(); // 產生stop bit提早結束通訊
 }

@@ -97,7 +97,7 @@ volatile uint8_t spi1_tx_done = 0; // 紀錄DMA傳送通道(DMA1_Channel3)搬運
 // ===== SPI1 Function =====
 // --- SPI1 Master 初始化 ---
 void SPI1_Master_Init(void) {
-	isMaster = 1; // 紀錄當前為Master模式
+    isMaster = 1; // 紀錄當前為Master模式
 
     // 啟用 GPIOA 和 SPI1 時鐘
     RCC_APB2ENR |= (1 << 2) | (1 << 12); // RCC_APB2ENR: IOPAEN 和 SPI1EN
@@ -108,10 +108,10 @@ void SPI1_Master_Init(void) {
     // 配置 GPIOA 引腳
     GPIOA_CRL &= ~((0xF << 16) |(0xF << 12) | (0xF << 20) | (0xF << 24) | (0xF << 28));
     GPIOA_CRL |=  (0x3 << 16) | // PA4 (NSS0) - General purpose output Push-pull, 50MHz
-				  (0x3 << 12) | // PA3 (NSS1) - General purpose output Push-pull, 50MHz
-    		      (0xB << 20) | // PA5 (SCK)  - Alternate function output Push-pull, 50MHz
-				  (0x8 << 24) | // PA6 (MISO) - Input with pull-up / pull-down
-				  (0xB << 28);  // PA7 (MOSI) - Alternate function output Push-pull, 50MHz
+                  (0x3 << 12) | // PA3 (NSS1) - General purpose output Push-pull, 50MHz
+                  (0xB << 20) | // PA5 (SCK)  - Alternate function output Push-pull, 50MHz
+                  (0x8 << 24) | // PA6 (MISO) - Input with pull-up / pull-down
+                  (0xB << 28);  // PA7 (MOSI) - Alternate function output Push-pull, 50MHz
 
     // 拉高 NSS0(PA4)、NSS1(PA3)
     GPIOA_ODR |= (1 << 4);
@@ -123,7 +123,7 @@ void SPI1_Master_Init(void) {
     // 配置 SPI1
     SPI1_CR1 = 0; // SPI1_CR1清空設定
     SPI1_CR1 = (1 << 2)  | // MSTR: Master模式
-			   (7 << 3)  | // BR[2:0]: fPCLK/256 = 8MHz/256 = 31.25kHz，週期32微秒
+               (7 << 3)  | // BR[2:0]: fPCLK/256 = 8MHz/256 = 31.25kHz，週期32微秒
                (1 << 9)  | // SSM: 軟體管理NSS，NSS Pin電位設定為手動控制
                (1 << 8)  | // SSI: 當SSM = 1時，SSI需設為1，避免MODF fault
                (0 << 7)  | // LSBFIRST: MSB 優先
@@ -161,7 +161,7 @@ void SPI1_Master_Init(void) {
 
 // --- SPI1 Slave 初始化 --
 void SPI1_Slave_Init(void) {
-	isMaster = 0; // 紀錄當前為Slave模式
+    isMaster = 0; // 紀錄當前為Slave模式
 
     // 啟用 GPIOA 和 SPI1 時鐘
     RCC_APB2ENR |= (1 << 2) | (1 << 12) | (1 << 0); // RCC_APB2ENR: IOPAEN 和 SPI1EN 和 AFIOEN
@@ -172,9 +172,9 @@ void SPI1_Slave_Init(void) {
     // 配置 GPIOA 引腳
     GPIOA_CRL &= ~((0xF << 16) | (0xF << 20) | (0xF << 24) | (0xF << 28));
     GPIOA_CRL |=  (0x8 << 16) | // PA4 (NSS)  - Input with pull-up / pull-down
-    		      (0x4 << 20) | // PA5 (SCK)  - Floating input
-				  (0x4 << 24) | // PA6 (MISO) - Floating input
-				  (0x4 << 28);  // PA7 (MOSI) - Floating input
+                  (0x4 << 20) | // PA5 (SCK)  - Floating input
+                  (0x4 << 24) | // PA6 (MISO) - Floating input
+                  (0x4 << 28);  // PA7 (MOSI) - Floating input
 
     // PA4 (NSS)設定為Input with pull-up
     GPIOA_ODR |= (1 << 4);
@@ -229,53 +229,53 @@ void SPI1_Slave_Init(void) {
 
 // --- SPI1 寫入spi1_tx_buf ---
 void SPI1_TX_Buf_Write(int idx, uint8_t val) {
-	if(isMaster) {
-		// 等待NSS0(PA4)、NSS1(PA3)拉高，確保所有通訊都已結束
-		while ( !(GPIOA_IDR & (1 << 4)) || !(GPIOA_IDR & (1 << 3)) );
-	}
-	else {
-		// 等待NSS(PA4)拉高，確保通訊已結束
-		while (!(GPIOA_IDR & (1 << 4)));
-	}
+    if(isMaster) {
+        // 等待NSS0(PA4)、NSS1(PA3)拉高，確保所有通訊都已結束
+        while ( !(GPIOA_IDR & (1 << 4)) || !(GPIOA_IDR & (1 << 3)) );
+    }
+    else {
+        // 等待NSS(PA4)拉高，確保通訊已結束
+        while (!(GPIOA_IDR & (1 << 4)));
+    }
 
-	spi1_tx_buf[idx] = val;
+    spi1_tx_buf[idx] = val;
 }
 
 // --- SPI1 讀取spi1_rx_buf ---
 uint8_t SPI1_RX_Buf_Read(int idx) {
-	if(isMaster) {
-		// 等待NSS0(PA4)、NSS1(PA3)拉高，確保所有通訊都已結束
-		while ( !(GPIOA_IDR & (1 << 4)) || !(GPIOA_IDR & (1 << 3)) );
-	}
-	else {
-		// 等待NSS(PA4)拉高，確保通訊已結束
-		while (!(GPIOA_IDR & (1 << 4)));
-	}
+    if(isMaster) {
+        // 等待NSS0(PA4)、NSS1(PA3)拉高，確保所有通訊都已結束
+        while ( !(GPIOA_IDR & (1 << 4)) || !(GPIOA_IDR & (1 << 3)) );
+    }
+    else {
+        // 等待NSS(PA4)拉高，確保通訊已結束
+        while (!(GPIOA_IDR & (1 << 4)));
+    }
 
-	return spi1_rx_buf[idx];
+    return spi1_rx_buf[idx];
 }
 
 // --- SPI1 Master 傳送and接收 --- // 由Master決定此次通訊交換多長資料(len)，Slave可自動應對
 void SPI1_Master_TransmitReceive(int SlaveNumber, const volatile uint8_t *tx_buf, const volatile uint8_t *rx_buf, int len) {
-	if(!isMaster) { return;} // 防止Slave模式誤用
-	if(len > SPI1_BUF_SIZE){ return;} // 傳送長度違法
+    if(!isMaster) { return;} // 防止Slave模式誤用
+    if(len > SPI1_BUF_SIZE){ return;} // 傳送長度違法
 
-	// 等待NSS0(PA4)、NSS1(PA3)拉高，確保所有通訊都已結束
-	while ( !(GPIOA_IDR & (1 << 4)) || !(GPIOA_IDR & (1 << 3)) );
+    // 等待NSS0(PA4)、NSS1(PA3)拉高，確保所有通訊都已結束
+    while ( !(GPIOA_IDR & (1 << 4)) || !(GPIOA_IDR & (1 << 3)) );
 
-	if (tx_buf != spi1_tx_buf){ // 若傳入的tx_buf不是spi1_tx_buf，則把tx_buf的內容複製到spi1_tx_buf
-		for(int i = 0; i < len; i++){
-			spi1_tx_buf[i] = tx_buf[i];
-		}
-	}
+    if (tx_buf != spi1_tx_buf){ // 若傳入的tx_buf不是spi1_tx_buf，則把tx_buf的內容複製到spi1_tx_buf
+        for(int i = 0; i < len; i++){
+            spi1_tx_buf[i] = tx_buf[i];
+        }
+    }
 
-	if(len > 1) { spi1_tx_done = 0;}
-	else if(len == 1) { spi1_tx_done = 1;} // 若len == 1，DMA1_Channel3的搬運資料長度將為0，會造成DMA1_Channel3不觸發搬運完成中斷，故手動設定spi1_tx_done = 1
-	else { return;}
-	spi1_rx_done = 0;
+    if(len > 1) { spi1_tx_done = 0;}
+    else if(len == 1) { spi1_tx_done = 1;} // 若len == 1，DMA1_Channel3的搬運資料長度將為0，會造成DMA1_Channel3不觸發搬運完成中斷，故手動設定spi1_tx_done = 1
+    else { return;}
+    spi1_rx_done = 0;
 
-	SPI1_DR = spi1_tx_buf[0]; // 覆蓋上一次通訊殘留的未傳送的無用資料，避免此無用資料被誤傳 (每次通訊的資料長度若不足SPI1_BUF_SIZE便會在SPI1_DR殘留無用資料)
-	DMA1_CCR3 &= ~1; // 設定前先禁用DMA1_Channel3
+    SPI1_DR = spi1_tx_buf[0]; // 覆蓋上一次通訊殘留的未傳送的無用資料，避免此無用資料被誤傳 (每次通訊的資料長度若不足SPI1_BUF_SIZE便會在SPI1_DR殘留無用資料)
+    DMA1_CCR3 &= ~1; // 設定前先禁用DMA1_Channel3
     DMA1_CMAR3 = (uint32_t)(spi1_tx_buf + 1); // 設定記憶體位址
     DMA1_CNDTR3 = len - 1; // 設定搬運資料長度
     DMA1_CCR3 |= 1; // 啟用DMA1_Channel3
@@ -288,60 +288,60 @@ void SPI1_Master_TransmitReceive(int SlaveNumber, const volatile uint8_t *tx_buf
 
     if(SlaveNumber == 0) {
         // 控制NSS選擇Slave 0，開始和Slave 0 通訊
-    	GPIOA_ODR |= (1 << 3); // 拉高 NSS1(PA3)，確保Slave 1沒被選擇到
+        GPIOA_ODR |= (1 << 3); // 拉高 NSS1(PA3)，確保Slave 1沒被選擇到
         GPIOA_ODR &= ~(1 << 4); // 拉低 NSS0(PA4)，選擇Slave 0
     }
     else if(SlaveNumber == 1) {
-    	// 控制NSS選擇Slave 1，開始和Slave 1 通訊
-    	GPIOA_ODR |= (1 << 4); // 拉高 NSS0(PA4)，確保Slave 0沒被選擇到
+        // 控制NSS選擇Slave 1，開始和Slave 1 通訊
+        GPIOA_ODR |= (1 << 4); // 拉高 NSS0(PA4)，確保Slave 0沒被選擇到
         GPIOA_ODR &= ~(1 << 3); // 拉低 NSS1(PA3)，選擇Slave 1
     }
 }
 
 // --- DMA1_Channel3 中斷處理函式(SPI1 TX) --- // Master模式才會啟用此中斷
 void DMA1_Channel3_IRQHandler(void) {
-	if (DMA1_ISR & (1 << 9)) { // DMA1_Channel3搬運完成flag
-	    DMA1_IFCR |= (1 << 9); // 清除DMA1_Channel3搬運完成flag，避免此中斷一直連續觸發
+    if (DMA1_ISR & (1 << 9)) { // DMA1_Channel3搬運完成flag
+        DMA1_IFCR |= (1 << 9); // 清除DMA1_Channel3搬運完成flag，避免此中斷一直連續觸發
 
-	    spi1_tx_done = 1; // 紀錄DMA1_Channel3搬運完成
-	    if(spi1_tx_done && spi1_rx_done) { // 若DMA1_Channel3、DMA1_Channel2都搬運完成
-	        // 拉高 NSS0(PA4)、NSS1(PA3)
-	        GPIOA_ODR |= (1 << 4);
-	        GPIOA_ODR |= (1 << 3);
-	    }
-	}
+        spi1_tx_done = 1; // 紀錄DMA1_Channel3搬運完成
+        if(spi1_tx_done && spi1_rx_done) { // 若DMA1_Channel3、DMA1_Channel2都搬運完成
+            // 拉高 NSS0(PA4)、NSS1(PA3)
+            GPIOA_ODR |= (1 << 4);
+            GPIOA_ODR |= (1 << 3);
+        }
+    }
 }
 
 // --- DMA1_Channel2 中斷處理函式(SPI1 RX) --- // Master模式才會啟用此中斷
 void DMA1_Channel2_IRQHandler(void) {
-	if (DMA1_ISR & (1 << 5)) { // DMA1_Channel2搬運完成flag
-	    DMA1_IFCR |= (1 << 5); // 清除DMA1_Channel2搬運完成flag，避免此中斷一直連續觸發
+    if (DMA1_ISR & (1 << 5)) { // DMA1_Channel2搬運完成flag
+        DMA1_IFCR |= (1 << 5); // 清除DMA1_Channel2搬運完成flag，避免此中斷一直連續觸發
 
-	    spi1_rx_done = 1; // 紀錄DMA1_Channel2搬運完成
-	    if(spi1_tx_done && spi1_rx_done) { // 若DMA1_Channel3、DMA1_Channel2都搬運完成
-	        // 拉高 NSS0(PA4)、NSS1(PA3)
-	        GPIOA_ODR |= (1 << 4);
-	        GPIOA_ODR |= (1 << 3);
-	    }
-	}
+        spi1_rx_done = 1; // 紀錄DMA1_Channel2搬運完成
+        if(spi1_tx_done && spi1_rx_done) { // 若DMA1_Channel3、DMA1_Channel2都搬運完成
+            // 拉高 NSS0(PA4)、NSS1(PA3)
+            GPIOA_ODR |= (1 << 4);
+            GPIOA_ODR |= (1 << 3);
+        }
+    }
 }
 
 // --- EXTI4外部中斷處理函式 --- // Slave模式才會啟用此中斷，NSS引腳(PA4)被Master拉低或拉高時觸發
 void EXTI4_IRQHandler(void) {
     if (EXTI_PR & (1 << 4)) { // 確認是EXTI4外部中斷所觸發
 
-    	// 讀取NSS(PA4)電位，確認此次外部中斷觸發是因為被拉低還是拉高
-    	if(!(GPIOA_IDR & (1 << 4))) { // 若為拉低，代表開始通訊，則將MISO轉為輸出模式
-    	    GPIOA_CRL &= ~(0xF << 24); // PA6 (MISO) - 清空
-    	    GPIOA_CRL |=  (0xB << 24); // PA6 (MISO) - Alternate function output Push-pull, 50MHz
-    	}
-    	else { // 若為拉高，代表通訊結束，則將MISO轉為Floating input模式(高阻抗)，避免在MISO線路上和其餘Slave產生短路
-    	    GPIOA_CRL &= ~(0xF << 24); // PA6 (MISO) - 清空
-    	    GPIOA_CRL |=  (0x4 << 24); // PA6 (MISO) - Floating input
+        // 讀取NSS(PA4)電位，確認此次外部中斷觸發是因為被拉低還是拉高
+        if(!(GPIOA_IDR & (1 << 4))) { // 若為拉低，代表開始通訊，則將MISO轉為輸出模式
+            GPIOA_CRL &= ~(0xF << 24); // PA6 (MISO) - 清空
+            GPIOA_CRL |=  (0xB << 24); // PA6 (MISO) - Alternate function output Push-pull, 50MHz
+        }
+        else { // 若為拉高，代表通訊結束，則將MISO轉為Floating input模式(高阻抗)，避免在MISO線路上和其餘Slave產生短路
+            GPIOA_CRL &= ~(0xF << 24); // PA6 (MISO) - 清空
+            GPIOA_CRL |=  (0x4 << 24); // PA6 (MISO) - Floating input
 
             spi1_rx_dataLen = SPI1_BUF_SIZE - DMA1_CNDTR2; // 接收資料的長度 = spi1_rx_buf長度 - DMA1_Channel2剩餘可搬運長度
 
-        	SPI1_DR = spi1_tx_buf[0]; // 覆蓋上一次通訊殘留的未傳送的無用資料，避免此無用資料被誤傳 (每次通訊的資料長度若不足SPI1_BUF_SIZE便會在SPI1_DR殘留無用資料)
+            SPI1_DR = spi1_tx_buf[0]; // 覆蓋上一次通訊殘留的未傳送的無用資料，避免此無用資料被誤傳 (每次通訊的資料長度若不足SPI1_BUF_SIZE便會在SPI1_DR殘留無用資料)
             DMA1_CCR3 &= ~1; // 設定前先禁用DMA1_Channel3
             DMA1_CMAR3 = (uint32_t)(spi1_tx_buf + 1); // 設定記憶體位址
             DMA1_CNDTR3 = SPI1_BUF_SIZE - 1; // 設定搬運資料長度
@@ -352,7 +352,7 @@ void EXTI4_IRQHandler(void) {
             DMA1_CMAR2 = (uint32_t)spi1_rx_buf; // 設定記憶體位址
             DMA1_CNDTR2 = SPI1_BUF_SIZE; // 設定搬運資料長度
             DMA1_CCR2 |= 1; // 啟用DMA1_Channel2
-    	}
-    	EXTI_PR |= (1 << 4); // 清除Pending bit，否則此中斷會馬上再次觸發 (寫入1可清除此Reg該位元)
+        }
+        EXTI_PR |= (1 << 4); // 清除Pending bit，否則此中斷會馬上再次觸發 (寫入1可清除此Reg該位元)
     }
 }

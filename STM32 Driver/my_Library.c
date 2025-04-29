@@ -92,7 +92,7 @@ volatile unsigned int ms_ticks = 0; // 紀錄SysTick中斷觸發次數
 
 // --- SysTick 初始化 ---
 void systick_init(void) {
-	SYST_RVR = 8000 - 1; // 設定Reload Value(計數器每次倒數的初始)，HCLK頻率維持系統預設值8MHz，8MHz / 8000 = 1kHz，每1ms觸發一次SysTick中斷
+    SYST_RVR = 8000 - 1; // 設定Reload Value(計數器每次倒數的初始)，HCLK頻率維持系統預設值8MHz，8MHz / 8000 = 1kHz，每1ms觸發一次SysTick中斷
     SYST_CVR = 0; // 清除目前的計數值，寫入任意值都會將目前的計數器清為0，確保下個clock reload成SYST_RVR值
     SYST_CSR = 0x07; // SYST_CSR[2:0] = 111，使用系統主時脈(HCLK)、啟用SysTick中斷、開始倒數
     NVIC_ISER0 |= (1 << 15); // 設定SysTick中斷向量(IRQ15)
@@ -112,24 +112,24 @@ void SysTick_Handler(void) { // SysTick中斷處理函式
 // ===== blinkblink =====
 // --- 設定板子上的自帶的燈炮(PC13) ---
 void blinkblink_init(void){
-	// 開啟GPIOC時鐘
-	RCC_APB2ENR |= (1 << 4);
+    // 開啟GPIOC時鐘
+    RCC_APB2ENR |= (1 << 4);
 
-	// 設定PC13為General purpose output Push-pull，最大 2MHz
-	GPIOC_CRH &= ~(0xF << 20); // 清除原設定
-	GPIOC_CRH |=  (0x2 << 20); // CNF13[1:0]=00(General purpose output Push-pull)，MODE13[1:0]=10(2MHz)
+    // 設定PC13為General purpose output Push-pull，最大 2MHz
+    GPIOC_CRH &= ~(0xF << 20); // 清除原設定
+    GPIOC_CRH |=  (0x2 << 20); // CNF13[1:0]=00(General purpose output Push-pull)，MODE13[1:0]=10(2MHz)
 
-	GPIOC_ODR |= (1 << 13); // 將PC13預設為HIGH(燈泡不亮)
+    GPIOC_ODR |= (1 << 13); // 將PC13預設為HIGH(燈泡不亮)
 }
 
 // --- 閃板子上的自帶的燈炮(PC13) ---
 void blinkblink(uint8_t k, unsigned int s){ // 閃燈炮k次，週期2*s ms
-	for(int i=0; i<k; i++){
-		GPIOC_ODR ^= (1 << 13);
-		delay_ms(s);
-		GPIOC_ODR ^= (1 << 13);
-		delay_ms(s);
-	}
+    for(int i=0; i<k; i++){
+        GPIOC_ODR ^= (1 << 13);
+        delay_ms(s);
+        GPIOC_ODR ^= (1 << 13);
+        delay_ms(s);
+    }
 }
 
 // ===== PWM1(with Timer2) =====
@@ -166,22 +166,22 @@ void PWM1_Init(unsigned int us1, unsigned int us2) { // 輸入 us1：PWM週期(�
 
 // --- PWM1 改變PWM週期 ---
 void PWM1_ChangePeriod(unsigned int us) { // 輸入us：PWM週期(微秒)
-	TIM2_ARR = us - 1; // us1微秒觸發一次Timer2更新
+    TIM2_ARR = us - 1; // us1微秒觸發一次Timer2更新
 }
 
 // --- PWM1 改變PWM高電位時間 ---
 void PWM1_ChangeHighTime(unsigned int us) { // 輸入us：PWM高電位時間(微秒)
-	TIM2_CCR1 = us; // 設定PWM高電位時間為us微秒
+    TIM2_CCR1 = us; // 設定PWM高電位時間為us微秒
 }
 
 // --- PWM1 啟用 ---
 void PWM1_Enable(void) { // 輸入us：PWM高電位時間(微秒)
-	TIM2_CCER |= (1 << 0); // 啟用CC1通道輸出
+    TIM2_CCER |= (1 << 0); // 啟用CC1通道輸出
 }
 
 // --- PWM1 關閉 ---
 void PWM1_Disable(void) {
-	TIM2_CCER &= ~(1 << 0); // 關閉CC1通道輸出
+    TIM2_CCER &= ~(1 << 0); // 關閉CC1通道輸出
     GPIOA_ODR &= ~(1 << 0); // PA0拉低
 }
 
@@ -216,14 +216,14 @@ void TIM3_ms_ChangeTime(unsigned int ms) {
 
 // --- Timer3 啟用 ---
 void TIM3_ms_Enable(void) {
-	TIM3_CR1 |= (1 << 0); // CEN啟用計數器
-	Timer3_ms_flag = 0;
+    TIM3_CR1 |= (1 << 0); // CEN啟用計數器
+    Timer3_ms_flag = 0;
 }
 
 // --- Timer3 關閉 ---
 void TIM3_ms_Disable(void) {
-	TIM3_CR1 &= ~(1 << 0); // CEN關閉計數器
-	Timer3_ms_flag = 0;
+    TIM3_CR1 &= ~(1 << 0); // CEN關閉計數器
+    Timer3_ms_flag = 0;
 }
 
 // --- Timer3 更新中斷處理函式 ---
@@ -282,23 +282,23 @@ uint16_t ADC1_Read(void) {
 
 // --- string to unsigned int ---
 unsigned int string_to_uint(const volatile uint8_t *str, int len) {
-	unsigned int result = 0;
+    unsigned int result = 0;
 
-	for(int i=0; i<len; i++) {
+    for(int i=0; i<len; i++) {
         if (*str >= '0' && *str <= '9') {
             result = result * 10 + (*str - '0');
         } else {
             break; // 遇到非數字字元就停止
         }
         str++;
-	}
+    }
 
     return result;
 }
 
 // --- float to string ---
 void float_to_string(float num, char *buf, int int_digits, int frac_digits) {
-	char *buf_0 = buf;
+    char *buf_0 = buf;
 
     if (num < 0) {
         *buf++ = '-';
@@ -329,9 +329,9 @@ void float_to_string(float num, char *buf, int int_digits, int frac_digits) {
     while (i--) *buf++ = tmp[i];
 
     if(frac_digits < 1) {
-    	*buf = '\0';  // 結尾
-    	*(buf_0 + int_digits) = '\0'; // 防止string長度過長
-    	return;
+        *buf = '\0';  // 結尾
+        *(buf_0 + int_digits) = '\0'; // 防止string長度過長
+        return;
     }
 
     *buf++ = '.';  // 小數點

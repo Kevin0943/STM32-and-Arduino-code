@@ -19,30 +19,30 @@ LCD1602 Library
 // ===== LCD1602 Function =====
 // --- LCD1602 傳送指令 ---
 void LCD1602_Send_Cmd(char data) {
-	uint8_t data_h = data & 0xF0;
-	uint8_t data_l = (data << 4) & 0xF0;
+    uint8_t data_h = data & 0xF0;
+    uint8_t data_l = (data << 4) & 0xF0;
 
-	I2C1_TX_Buf_Write(0, data_h | 0x0C);
-	I2C1_TX_Buf_Write(1, data_h | 0x08);
-	I2C1_TX_Buf_Write(2, data_l | 0x0C);
-	I2C1_TX_Buf_Write(3, data_l | 0x08);
+    I2C1_TX_Buf_Write(0, data_h | 0x0C);
+    I2C1_TX_Buf_Write(1, data_h | 0x08);
+    I2C1_TX_Buf_Write(2, data_l | 0x0C);
+    I2C1_TX_Buf_Write(3, data_l | 0x08);
 
-	I2C1_Master_Write(LCD6050_DevADDR, i2c1_tx_buf, 4);
-	delay_ms(1);
+    I2C1_Master_Write(LCD6050_DevADDR, i2c1_tx_buf, 4);
+    delay_ms(1);
 }
 
 // --- LCD1602 傳送資料 ---
 void LCD1602_Send_Data(char data) {
-	uint8_t data_h = data & 0xF0;
-	uint8_t data_l = (data << 4) & 0xF0;
+    uint8_t data_h = data & 0xF0;
+    uint8_t data_l = (data << 4) & 0xF0;
 
-	I2C1_TX_Buf_Write(0, data_h | 0x0D);
-	I2C1_TX_Buf_Write(1, data_h | 0x09);
-	I2C1_TX_Buf_Write(2, data_l | 0x0D);
-	I2C1_TX_Buf_Write(3, data_l | 0x09);
+    I2C1_TX_Buf_Write(0, data_h | 0x0D);
+    I2C1_TX_Buf_Write(1, data_h | 0x09);
+    I2C1_TX_Buf_Write(2, data_l | 0x0D);
+    I2C1_TX_Buf_Write(3, data_l | 0x09);
 
-	I2C1_Master_Write(LCD6050_DevADDR, i2c1_tx_buf, 4);
-	delay_ms(1);
+    I2C1_Master_Write(LCD6050_DevADDR, i2c1_tx_buf, 4);
+    delay_ms(1);
 }
 
 // --- LCD1602 清除螢幕 ---
@@ -53,7 +53,7 @@ void LCD1602_Clear(void) {
 
 // --- LCD1602 初始化 ---
 void LCD1602_Init(void) {
-	delay_ms(1000);
+    delay_ms(1000);
 
     LCD1602_Send_Cmd(0x30);
     delay_ms(5);

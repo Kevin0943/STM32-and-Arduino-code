@@ -61,31 +61,31 @@ volatile uint8_t uart1_tx_buf[UART1_BUF_SIZE]; // 資料傳送Buffer
 // ===== UART1 Function =====
 // --- UART1 初始化 ---
 void UART1_Init(uint32_t brr){ // UART1初始化，輸入欲使用的波特率
-	// 啟用APB2相關Clock
-	RCC_APB2ENR |= (1 << 2); // 啟用GPIOA Clock
-	RCC_APB2ENR |= (1 << 14); // 啟用USART1 Clock
+    // 啟用APB2相關Clock
+    RCC_APB2ENR |= (1 << 2); // 啟用GPIOA Clock
+    RCC_APB2ENR |= (1 << 14); // 啟用USART1 Clock
 
-	// 啟用AHB相關Clock
-	RCC_AHBENR  |= (1 << 0); // 啟用DMA1 Clock
+    // 啟用AHB相關Clock
+    RCC_AHBENR  |= (1 << 0); // 啟用DMA1 Clock
 
-	// 設PA9為Alternate function output Push-pull輸出(USART1 TX)
-	GPIOA_CRH &= ~(0xF << 4); // PA9清除設定
-	GPIOA_CRH |=  (0xB << 4); // CNF=10，MODE=11
+    // 設PA9為Alternate function output Push-pull輸出(USART1 TX)
+    GPIOA_CRH &= ~(0xF << 4); // PA9清除設定
+    GPIOA_CRH |=  (0xB << 4); // CNF=10，MODE=11
 
-	// 設PA10為Floating input(USART1 RX)
-	GPIOA_CRH &= ~(0xF << 8);  // PA10清除設定
-	GPIOA_CRH |=  (0x4 << 8);  // CNF=01，MODE=00
+    // 設PA10為Floating input(USART1 RX)
+    GPIOA_CRH &= ~(0xF << 8);  // PA10清除設定
+    GPIOA_CRH |=  (0x4 << 8);  // CNF=01，MODE=00
 
-	// 設定USART1波特率
-	float usart_div = 8000000.0f / (16.0f * (float)brr);
-	uint32_t usart_div_mantissa = (uint32_t)usart_div;
-	uint32_t usart_div_fraction = (uint32_t)((usart_div - usart_div_mantissa) * 16.0f);
-	USART1_BRR = (usart_div_mantissa << 4) | (usart_div_fraction & 0xF);
+    // 設定USART1波特率
+    float usart_div = 8000000.0f / (16.0f * (float)brr);
+    uint32_t usart_div_mantissa = (uint32_t)usart_div;
+    uint32_t usart_div_fraction = (uint32_t)((usart_div - usart_div_mantissa) * 16.0f);
+    USART1_BRR = (usart_div_mantissa << 4) | (usart_div_fraction & 0xF);
 
     // 啟用USART1相關功能
-	USART1_CR1 = 0; // USART1_CR1清空設定
-	USART1_CR1 |= (1 << 2);  // 啟用RX
-	USART1_CR1 |= (1 << 3);  // 啟用TX
+    USART1_CR1 = 0; // USART1_CR1清空設定
+    USART1_CR1 |= (1 << 2);  // 啟用RX
+    USART1_CR1 |= (1 << 3);  // 啟用TX
     USART1_CR1 |= (1 << 4); // 啟用IDLE中斷
 
     // 啟用USART1的DMA相關功能
@@ -119,25 +119,25 @@ void UART1_Init(uint32_t brr){ // UART1初始化，輸入欲使用的波特率
 
 // --- UART1 寫入uart1_tx_buf ---
 void UART1_TX_Buf_Write(int idx, uint8_t val) {
-	while (DMA1_CNDTR4); // 等待上一批的資料搬運完成，不需要等待TXE = 1 (Data register 空)
-	uart1_tx_buf[idx] = val;
+    while (DMA1_CNDTR4); // 等待上一批的資料搬運完成，不需要等待TXE = 1 (Data register 空)
+    uart1_tx_buf[idx] = val;
 }
 
 // --- UART1 傳送多個byte ---
 void UART1_Send_Data(const volatile uint8_t *tx_buf, int len) {
-	if(len > UART1_BUF_SIZE){ return;} // 傳送長度違法
+    if(len > UART1_BUF_SIZE){ return;} // 傳送長度違法
 
-	while (DMA1_CNDTR4); // 等待上一批的資料搬運完成
-	// 等待TXE = 1 (Data register 空) (DMA1_CNDTR4為0只代表DMA已把最後的數據搬到USART1_DR中，但不代表USART1_DR中的數據已被USART1硬體送出去)
-	while (!(USART1_SR & (1 << 7))); // Bit 7: TXE
+    while (DMA1_CNDTR4); // 等待上一批的資料搬運完成
+    // 等待TXE = 1 (Data register 空) (DMA1_CNDTR4為0只代表DMA已把最後的數據搬到USART1_DR中，但不代表USART1_DR中的數據已被USART1硬體送出去)
+    while (!(USART1_SR & (1 << 7))); // Bit 7: TXE
 
-	if (tx_buf != uart1_tx_buf){ // 若傳入的tx_buf不是uart1_tx_buf，則把tx_buf的內容複製到uart1_tx_buf
-		for(int i = 0; i < len; i++){
-			uart1_tx_buf[i] = tx_buf[i];
-		}
-	}
+    if (tx_buf != uart1_tx_buf){ // 若傳入的tx_buf不是uart1_tx_buf，則把tx_buf的內容複製到uart1_tx_buf
+        for(int i = 0; i < len; i++){
+            uart1_tx_buf[i] = tx_buf[i];
+        }
+    }
 
-	DMA1_CCR4 &= ~1; // 設定前先禁用DMA1_Channel4
+    DMA1_CCR4 &= ~1; // 設定前先禁用DMA1_Channel4
     DMA1_CMAR4 = (uint32_t)uart1_tx_buf; // 設定記憶體位址
     DMA1_CNDTR4 = len; // 設定搬運資料長度
     DMA1_CCR4 |= 1; // 啟用DMA1_Channel4，啟用後開始自動搬運直到搬完
@@ -145,17 +145,17 @@ void UART1_Send_Data(const volatile uint8_t *tx_buf, int len) {
 
 // --- UART1 傳送string ---
 void UART1_Send_String(const char *s) {
-	while (DMA1_CNDTR4); // 等待上一批的資料搬運完成
-	// 等待TXE = 1 (Data register 空) (DMA1_CNDTR4為0只代表DMA已把最後的數據搬到USART1_DR中，但不代表USART1_DR中的數據已被USART1硬體送出去)
-	while (!(USART1_SR & (1 << 7))); // Bit 7: TXE
+    while (DMA1_CNDTR4); // 等待上一批的資料搬運完成
+    // 等待TXE = 1 (Data register 空) (DMA1_CNDTR4為0只代表DMA已把最後的數據搬到USART1_DR中，但不代表USART1_DR中的數據已被USART1硬體送出去)
+    while (!(USART1_SR & (1 << 7))); // Bit 7: TXE
 
-	int len = 0;
-	while (s[len] && (len < UART1_BUF_SIZE)) { // 計算string長度，最多可傳送UART1_BUF_SIZE個字元
-		uart1_tx_buf[len] = s[len];
-	    len++;
-	}
+    int len = 0;
+    while (s[len] && (len < UART1_BUF_SIZE)) { // 計算string長度，最多可傳送UART1_BUF_SIZE個字元
+        uart1_tx_buf[len] = s[len];
+        len++;
+    }
 
-	DMA1_CCR4 &= ~1; // 設定前先禁用DMA1_Channel4
+    DMA1_CCR4 &= ~1; // 設定前先禁用DMA1_Channel4
     DMA1_CMAR4 = (uint32_t)uart1_tx_buf; // 設定記憶體位址
     DMA1_CNDTR4 = len; // 設定搬運資料長度
     DMA1_CCR4 |= 1; // 啟用DMA1_Channel4，啟用後開始自動搬運直到搬完
